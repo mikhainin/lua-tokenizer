@@ -1,65 +1,95 @@
+%skeleton "lalr1.cc" /* -*- C++ -*- */
+
+%code requires{
+   class lua_driver;
+   class Scanner;
+   class Node;
+}
 
 %{
-#include "parser.h"
-/* #include <string> */
-#define YYDEBUG 1
+
+
+#include <parser.hpp>
+#include <lparser.h>
+#include <lua_driver.hh>
+#include <nodes.hh>
+
+#include <string>
+
+static int yylex(yy::parser::semantic_type *yylval,
+                 Scanner  &scanner,
+                 lua_driver   &driver);
+
 %}
-/*
+
 %union {
-	int ival;
-	std::string sval;
+	Node *node;
 };
-*/
+
+
+%lex-param   { Scanner  &scanner  }
+%parse-param { Scanner  &scanner  }
+
+%lex-param   { lua_driver& driver }
+%parse-param { lua_driver& driver }
+
 %start ROOT
 
-%token T_EQ
-%token T_NE
-%token T_LT
-%token T_LE
-%token T_GT
-%token T_GE
-%token T_PLUS
-%token T_MINUS
-%token T_MULT
-%token T_DIVIDE
 %token T_RPAREN
 %token T_LPAREN
-%token T_ASSIGN
-%token T_AND
-%token T_OR
-%token T_NOT
-%token T_SEMICOLON
-%token T_IF
-%token T_THEN
-%token T_ELSE
-%token T_ELSEIF
-%token T_WHILE
-%token T_DO
-%token T_NUMBER
-%token T_NAME
-%token T_FOR
-%token T_END
-%token T_FUNCTION
-%token T_LOCAL
-%token T_REPEAT
-%token T_UNTIL
-%token T_COMMENT
-%token T_STRING
-%token T_BREAK
-%token T_RETURN
-%token T_NIL
-%token T_FALSE
-%token T_TRUE
+%token <node> T_SEMICOLON
+%token <node> T_IF
+%token <node> T_THEN
+%token <node> T_ELSE
+%token <node> T_ELSEIF
+%token <node> T_WHILE
+%token <node> T_DO
+%token <node> T_NUMBER
+%token <node> T_NAME
+%token <node> T_FOR
+%token <node> T_END
+%token <node> T_FUNCTION
+%token <node> T_LOCAL
+%token <node> T_REPEAT
+%token <node> T_UNTIL
+%token <node> T_COMMENT
+%token <node> T_STRING
+%token <node> T_BREAK
+%token <node> T_RETURN
+%token <node> T_NIL
+%token <node> T_FALSE
+%token <node> T_TRUE
 %token T_LEFT_BRACE
 %token T_RIGHT_BRACE
 %token T_LEFT_SQUARE_BRACE
 %token T_RIGHT_SQUARE_BRACE
-%token T_COMMA
-%token T_DOT
-%token T_COLON
-%token T_CONCAT
-%token T_TABLELEN
-%token T_IN
+%token <node> T_COMMA
+%token <node> T_COLON
+%token <node> T_IN
+
+%type <node> exp
+%type <node> block binop prefixexp args explist fieldsep statement funcnameslist functioncall var unop laststat
+	
+	
+%right <node> T_ASSIGN
+
+%left <node> T_OR
+
+%right <node> T_AND
+
+%left <node> T_EQ T_NE T_LT T_LE T_GT T_GE
+
+%right <node> T_CONCAT
+
+%left <node> T_PLUS T_MINUS
+
+%left <node> T_MULT T_DIVIDE T_MODULO
+
+%right <node> T_NOT T_TABLELEN
+
+%right <node> T_EXPONENTIATION
+
+%left <node> T_DOT
 
 %%
 
@@ -70,15 +100,22 @@ ROOT:
 ;
 
 
-stat:
+
+block:
+  stmtseq
+| stmtseq laststat
+|
+;
+
+statement:
 	comment
 |   varlist T_ASSIGN explist  
 |	functioncall
 
-|   T_IF exp T_THEN block T_END
-|   T_IF exp T_THEN block T_ELSE block T_END
-|   T_IF exp T_THEN block elseifblock T_END
-|   T_IF exp T_THEN block elseifblock T_ELSE block T_END
+|   T_IF exp T_THEN block T_END               { $$ = driver.createNode<IfBlock>($2, $4); }
+|   T_IF exp T_THEN block T_ELSE block  T_END
+|   T_IF exp T_THEN block elseifblock   T_END
+|   T_IF exp T_THEN block elseifblock   T_ELSE block T_END
  
 |   T_FOR T_NAME T_ASSIGN exp T_COMMA exp T_DO block T_END
 |   T_FOR T_NAME T_ASSIGN exp T_COMMA exp T_COMMA exp T_DO block T_END
@@ -95,9 +132,9 @@ elseifblock:
 ;
 
 laststat:
-  T_BREAK
-| T_RETURN
-| T_RETURN explist
+  T_BREAK          { $$ = $1; }
+| T_RETURN         { $$ = driver.createNode<ReturnStatement>(); }
+| T_RETURN explist { $$ = driver.createNode<ReturnStatement>($2); }
 ;
 
 funcname:
@@ -106,27 +143,21 @@ funcname:
 ;
 
 funcnameslist:
-   T_NAME
-|  T_NAME T_DOT  T_NAME
+   T_NAME 				{ $$ = $1; }
+|  T_NAME T_DOT T_NAME  { $$ = driver.createNode<DotBinExpression>($2, $1, $3); }
 ;
 
 
 stmtseq:
-  stmtseq T_SEMICOLON stat /* { $$ = seq($1, $3); } */
+  stmtseq T_SEMICOLON statement /* { $$ = seq($1, $3); } */
 
-| stat	
-| stat T_SEMICOLON
+| statement	
+| statement T_SEMICOLON
 
 | stmtseq /* one statement per line */ 
-  stat /* { $$ = seq($1, $2); } */
+  statement /* { $$ = seq($1, $2); } */
 ;
 
-
-block:
-  stmtseq
-| stmtseq laststat
-|
-;
 
 
 
@@ -137,9 +168,9 @@ varlist:
 
 
 var:
-  T_NAME
+  T_NAME { $$ = $1; }
 | prefixexp T_LEFT_SQUARE_BRACE exp T_RIGHT_SQUARE_BRACE
-| prefixexp T_DOT T_NAME
+| prefixexp T_DOT T_NAME { $$ = driver.createNode<DotBinExpression>($2, $1, $3); }
 ;
 
 namelist:
@@ -149,55 +180,55 @@ namelist:
 
 explist:
   exp T_COMMA explist
-| exp 
+| exp { $$ = $1; }
 ;
 
 
 exp:
-  T_NIL
-| T_FALSE
-| T_TRUE
-| T_NUMBER 
-| T_STRING 
+  T_NIL    { $$ = $1; }
+| T_FALSE  { $$ = $1; }
+| T_TRUE   { $$ = $1; }
+| T_NUMBER { $$ = $1; }
+| T_STRING { $$ = $1; }
 | "..." 
 | function 
-| prefixexp 
+| prefixexp     { $$ = $1; }
 | tableconstructor 
-| exp binop exp 
-| unop exp 
+| binop    { $$ = $1; }
+| unop     { $$ = $1; }
 | exp comment
 | comment exp
 ;
 
 prefixexp:
-  var
-| functioncall
-| T_LPAREN exp T_RPAREN
+  var                   { $$ = $1; }
+| functioncall          { $$ = $1; }
+| T_LPAREN exp T_RPAREN { $$ = driver.createNode<Parens>($2); }
 ;
 
 binop:
-  T_PLUS
-| T_MINUS
-| T_MULT
-| T_DIVIDE
-| '^' 
-| '%'
-| T_CONCAT
-| T_LT
-| T_LE
-| T_GT
-| T_GE
-| T_EQ
-| T_NE
-| T_AND
-| T_OR
+  exp T_PLUS    exp { $$ = driver.createNode<BinExpression>($2, $1, $3); } 
+| exp T_MINUS   exp { $$ = driver.createNode<BinExpression>($2, $1, $3); } 
+| exp T_MULT    exp { $$ = driver.createNode<BinExpression>($2, $1, $3); } 
+| exp T_DIVIDE  exp { $$ = driver.createNode<BinExpression>($2, $1, $3); } 
+| exp T_EXPONENTIATION exp { $$ = driver.createNode<BinExpression>($2, $1, $3); } 
+| exp T_MODULO  exp { $$ = driver.createNode<BinExpression>($2, $1, $3); } 
+| exp T_CONCAT  exp { $$ = driver.createNode<BinExpression>($2, $1, $3); } 
+| exp T_LT      exp { $$ = driver.createNode<BinExpression>($2, $1, $3); } 
+| exp T_LE      exp { $$ = driver.createNode<BinExpression>($2, $1, $3); } 
+| exp T_GT      exp { $$ = driver.createNode<BinExpression>($2, $1, $3); } 
+| exp T_GE      exp { $$ = driver.createNode<BinExpression>($2, $1, $3); } 
+| exp T_NE      exp { $$ = driver.createNode<BinExpression>($2, $1, $3); } 
+| exp T_AND     exp { $$ = driver.createNode<BinExpression>($2, $1, $3); }    
+| exp T_OR      exp { $$ = driver.createNode<BinExpression>($2, $1, $3); }
+| exp T_EQ      exp { $$ = driver.createNode<BinExpression>($2, $1, $3); }
 ;
 
 
 unop:
-  T_MINUS
-| T_NOT 
-| T_TABLELEN
+  T_MINUS    exp { $$ = driver.createNode<UnaryExpression>($1, $2); }
+| T_NOT      exp { $$ = driver.createNode<UnaryExpression>($1, $2); }
+| T_TABLELEN exp { $$ = driver.createNode<UnaryExpression>($1, $2); }
 ;
 
 
@@ -239,21 +270,22 @@ field:
 
 
 fieldsep: 
-   T_COMMA | T_SEMICOLON
+  T_COMMA      { $$ = $1; } 
+| T_SEMICOLON  { $$ = $1; }
 ;
 
 
 functioncall:
-  prefixexp args 
-| prefixexp T_COLON T_NAME args
+  prefixexp args                   { $$ = driver.createNode<FunctionCall>($1, $2); }
+| prefixexp T_COLON T_NAME args    { $$ = driver.createNode<MethodCall>($1, $3, $4); }
 ;
 
 
 args:
-  T_LPAREN T_RPAREN 
-| T_LPAREN explist T_RPAREN 
+  T_LPAREN T_RPAREN          { $$ = driver.createNode<Parens>(); }
+| T_LPAREN explist T_RPAREN  { $$ = driver.createNode<Parens>($2); }
 | tableconstructor 
-| T_STRING
+| T_STRING { $$ = $1; }
 ;
 
 
@@ -262,3 +294,21 @@ comment:
 |	T_COMMENT
 ;
 
+%%
+
+#include "lua_driver.hh"
+void
+
+yy::parser::error (const yy::parser::location_type& l,
+                          const std::string& m)
+{
+  driver.error (l, m);
+}
+
+
+static int yylex(yy::parser::semantic_type *yylval,
+                     Scanner  &scanner,
+                     lua_driver   &driver)
+{
+   return( scanner.yylex(yylval) );
+}

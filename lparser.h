@@ -1,9 +1,11 @@
 #pragma once
+
+#include <map>
 #include <string>
 #include <iostream>
 
 int yyparse();
-int yylex();
+// int yylex();
 
 int oper(const std::string &op, ...);
 void execute(int);
@@ -16,3 +18,4 @@ void linecomment(const std::string &comment);
 
 void nextline();
 void yyerror(const char *s);
+

@@ -1,8 +1,12 @@
 %{
-#include "y.tab.h"
-#include "parser.h"
-# include <string>
+class lua_driver;
 
+#include <lua_driver.hh>
+#include <lparser.h>
+#include <nodes.hh>
+# include <string>
+typedef yy::parser::token token;
+#include <parser.hpp>
 
 std::string commentBuf;
 int commentLevel = 0;
@@ -28,6 +32,11 @@ void resetString() {
 }
 
 %}
+
+%option noyywrap nounput batch debug
+%option yyclass="Scanner"
+%option c++
+%option yylineno
 
 %x L_COMMENT_START
 %x L_COMMENT
@@ -59,12 +68,13 @@ void resetString() {
 <L_COMMENT>\]=*\]   {
 						const std::string toCompare(yytext, yyleng);
 						if ( commentEndLex == toCompare ) {
-							comment(commentBuf);
+							// comment(commentBuf);
 							BEGIN 0;
 							
-							resetComment();
 							
-							return T_COMMENT;
+							yylval->node = createNode<BlockCommentToken>(commentBuf, squareBracketStringLevel);
+							resetComment();
+							return token::T_COMMENT;
 							
 						} else {
 							commentBuf.append(toCompare);
@@ -78,11 +88,12 @@ void resetString() {
 <L_LINE_COMMENT>.  { commentBuf += *yytext; }
 <L_LINE_COMMENT>\n {
 						BEGIN 0;
-						linecomment(commentBuf);
-						// yylval = startStringChar;
+						
+						yylval->node = createNode<LineCommentToken>(commentBuf);
+						
 						resetComment();
 						nextline();
-						return T_COMMENT;
+						return token::T_COMMENT;
 					}
 
 
@@ -97,8 +108,8 @@ void resetString() {
 <L_QUOTE_STRING>'|\"  {
 						if (*yytext == startStringChar) {
 							BEGIN 0;
-							// yylval = startStringChar;
-							return T_STRING;
+							yylval->node = createNode<StringToken>(stringBuf, startStringChar);
+							return token::T_STRING;
 						} else {
 							stringBuf += *yytext;
 						}
@@ -121,7 +132,8 @@ void resetString() {
                                            const std::string toCompare(yytext, yyleng);
                                            if ( toCompare == squareStringEndLex ) {
                                             	BEGIN 0;
-                                            	return T_STRING;
+                                            	yylval->node = createNode<StringToken, std::string, char, int>(stringBuf, '[', squareBracketStringLevel);
+                                            	return token::T_STRING;
                                            } else {
                                            	    stringBuf += *yytext;
                                            }
@@ -129,53 +141,56 @@ void resetString() {
 <L_SQUARE_BRACKET_STRING>.     { stringBuf += *yytext; }
 			
 
-"=="       { return T_EQ; }
-"~="       { return T_NE; }
-"<"        { return T_LT; }
-"<="       { return T_LE; }
-">"        { return T_GT; }
-">="       { return T_GE; }
-"+"        { return T_PLUS; }
-"-"        { return T_MINUS; }
-"*"        { return T_MULT; }
-"/"        { return T_DIVIDE; }
-")"        { return T_RPAREN; }
-"("        { return T_LPAREN; }
-"{"        { return T_LEFT_BRACE; }
-"}"        { return T_RIGHT_BRACE; }
-"["        { return T_LEFT_SQUARE_BRACE; }
-"]"        { return T_RIGHT_SQUARE_BRACE; }
-"="        { return T_ASSIGN; }
-"and"      { return T_AND; }
-"or"       { return T_OR; }
-"not"      { return T_NOT; }
-"in"       { return T_IN; }
-";"        { return T_SEMICOLON; }
-"if"       { return T_IF; }
-"then"     { return T_THEN; }
-"else"     { return T_ELSE; }
-"elseif"   { return T_ELSEIF; }
-"whils"    { return T_WHILE; }
-"do"       { return T_DO; }
-"for"      { return T_FOR; }
-"end"      { return T_END; }
-"function" { return T_FUNCTION; }
-"local"    { return T_LOCAL; }
-"repeat"   { return T_REPEAT; }
-"until"    { return T_UNTIL; }
-"break"    { return T_BREAK; }
-","        { return T_COMMA; }
-"return"   { return T_RETURN; }
-"nil"      { return T_NIL; }
-"false"    { return T_FALSE; }
-"true"     { return T_TRUE; }
-".."       { return T_CONCAT; }
-"."        { return T_DOT; }
-":"        { return T_COLON; }
-"#"        { return T_TABLELEN; }
-[0-9]+(\.[0-9]+)?           { yylval = atoi(yytext); return T_NUMBER; }
-0x[0-9a-fA-F]               { yylval = atoi(yytext); return T_NUMBER; }
-[a-zA-Z_][a-zA-Z_0-9]*      { return T_NAME; }
+"=="       { createNode<OperatorToken>(yytext); return token::T_EQ; }
+"~="       { createNode<OperatorToken>(yytext); return token::T_NE; }
+"<"        { createNode<OperatorToken>(yytext); return token::T_LT; }
+"<="       { createNode<OperatorToken>(yytext); return token::T_LE; }
+">"        { createNode<OperatorToken>(yytext); return token::T_GT; }
+">="       { createNode<OperatorToken>(yytext); return token::T_GE; }
+"+"        { createNode<OperatorToken>(yytext); return token::T_PLUS; }
+"-"        { createNode<OperatorToken>(yytext); return token::T_MINUS; }
+"*"        { createNode<OperatorToken>(yytext); return token::T_MULT; }
+"/"        { createNode<OperatorToken>(yytext); return token::T_DIVIDE; }
+"="        { createNode<OperatorToken>(yytext); return token::T_ASSIGN; }
+"and"      { createNode<OperatorToken>(yytext); return token::T_AND; }
+"or"       { createNode<OperatorToken>(yytext); return token::T_OR; }
+"not"      { createNode<OperatorToken>(yytext); return token::T_NOT; }
+"in"       { createNode<OperatorToken>(yytext); return token::T_IN; }
+".."       { createNode<OperatorToken>(yytext); return token::T_CONCAT; }
+"#"        { createNode<OperatorToken>(yytext); return token::T_TABLELEN; }
+"^"        { createNode<OperatorToken>(yytext); return token::T_EXPONENTIATION; }
+"%"        { createNode<OperatorToken>(yytext); return token::T_MODULO; }
+
+")"        { return token::T_RPAREN; }
+"("        { return token::T_LPAREN; }
+"{"        { return token::T_LEFT_BRACE; }
+"}"        { return token::T_RIGHT_BRACE; }
+"["        { return token::T_LEFT_SQUARE_BRACE; }
+"]"        { return token::T_RIGHT_SQUARE_BRACE; }
+";"        { return token::T_SEMICOLON; }
+"if"       { createNode<KeywordToken>(yytext); return token::T_IF; }
+"then"     { createNode<KeywordToken>(yytext); return token::T_THEN; }
+"else"     { createNode<KeywordToken>(yytext); return token::T_ELSE; }
+"elseif"   { createNode<KeywordToken>(yytext); return token::T_ELSEIF; }
+"whils"    { createNode<KeywordToken>(yytext); return token::T_WHILE; }
+"do"       { createNode<KeywordToken>(yytext); return token::T_DO; }
+"for"      { createNode<KeywordToken>(yytext); return token::T_FOR; }
+"end"      { createNode<KeywordToken>(yytext); return token::T_END; }
+"function" { createNode<KeywordToken>(yytext); return token::T_FUNCTION; }
+"local"    { createNode<KeywordToken>(yytext); return token::T_LOCAL; }
+"repeat"   { createNode<KeywordToken>(yytext); return token::T_REPEAT; }
+"until"    { createNode<KeywordToken>(yytext); return token::T_UNTIL; }
+"break"    { createNode<KeywordToken>(yytext); return token::T_BREAK; }
+","        { return token::T_COMMA; }
+"return"   { createNode<KeywordToken>(yytext); return token::T_RETURN; }
+"nil"      { createNode<KeywordToken>(yytext); return token::T_NIL; }
+"false"    { createNode<KeywordToken>(yytext); return token::T_FALSE; }
+"true"     { createNode<KeywordToken>(yytext); return token::T_TRUE; }
+"."        { createNode<OperatorToken>(yytext); return token::T_DOT; }
+":"        { createNode<OperatorToken>(yytext);return token::T_COLON; }
+[0-9]+(\.[0-9]+)?           { createNode<NumberToken>(yytext); return token::T_NUMBER; }
+0x[0-9a-fA-F]               { createNode<NumberToken>(yytext); return token::T_NUMBER; }
+[a-zA-Z_][a-zA-Z_0-9]*      { createNode<NumberToken>(yytext); return token::T_NAME; }
 \          { ; }
 \n         { nextline(); }
 \t         { ; }

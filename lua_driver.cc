@@ -26,12 +26,11 @@ int lua_driver::parse (const std::string& f) {
 
 	    std::ifstream in_file( f.c_str() );
 	    if( ! in_file.good() ) exit( EXIT_FAILURE );
-	    scanner = new Scanner( &in_file );
+	    scanner.reset( new Scanner( &in_file ) );
 
 	    /* check to see if its initialized */
 	    assert( scanner != nullptr );
-	    parser = new yy::parser( (*scanner) /* scanner */,
-	                                (*this) /* driver */ );
+	    parser.reset(new yy::parser( *scanner, *this ) );
 	    // parser->set_debug_level(7);
 
 	    assert( parser != nullptr );

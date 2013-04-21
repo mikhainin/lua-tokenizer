@@ -68,7 +68,7 @@ static int yylex(yy::parser::semantic_type *yylval,
 %token <node> T_IN
 
 %type <node> exp
-%type <node> block binop prefixexp args explist fieldsep statement funcnameslist functioncall var unop laststat
+%type <node> block binop prefixexp args explist fieldsep statement funcnameslist functioncall var unop laststat comment
 	
 	
 %right <node> T_ASSIGN
@@ -108,7 +108,7 @@ block:
 ;
 
 statement:
-	comment
+	comment                                   { $$ = $1; }
 |   varlist T_ASSIGN explist  
 |	functioncall
 
@@ -196,8 +196,8 @@ exp:
 | tableconstructor 
 | binop    { $$ = $1; }
 | unop     { $$ = $1; }
-| exp comment
-| comment exp
+| exp comment { $$ = $1; }
+| comment exp { $$ = $2; }
 ;
 
 prefixexp:

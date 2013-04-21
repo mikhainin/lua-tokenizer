@@ -6,6 +6,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <memory>
 
 class lua_driver
 {
@@ -40,14 +41,15 @@ public:
 	  return n;
   }
 
+  void addNode(Node *);
+
 private:
   std::string file;
   bool trace_parsing;
-  yy::parser *parser;
-  Scanner *scanner;
+  std::shared_ptr<yy::parser> parser;
+  std::shared_ptr<Scanner > scanner;
   std::vector<Node *> expressionNodes;
 
-  void addNode(Node *);
 };
 
 
@@ -73,28 +75,10 @@ private:
        return( yylex() );
     }
 
-    template<class T, class P>
-    Node *createNode(const P &v) {
-    	Node *n = new T(v);
+    template<class T, typename... Args>
+    Node *createNode(Args... args) {
+    	Node *n = new T(args...);
     	addAndAssinNode(n);
-    	return n;
-    }
-
-    template<class T, class P1, class P2>
-    Node *createNode(const P1 &v1, const P2 &v2) {
-    	T *n = new T(v1, v2);
-    	yylval->node = n;
-    	n->setLocation(lineno());
-    	nodes.push_back(n);
-    	return n;
-    }
-
-    template<class T, class P1, class P2, class P3>
-    Node *createNode(const P1 &v1, const P2 &v2, const P2 &v3) {
-    	T *n = new T(v1, v2, v3);
-    	yylval->node = n;
-    	n->setLocation(lineno());
-    	nodes.push_back(n);
     	return n;
     }
 

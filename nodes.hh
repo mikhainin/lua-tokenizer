@@ -59,9 +59,12 @@ private:
 };
 
 
+class Comment : public Node {
+protected:
+	inline Comment() : Node() {};
+};
 
-
-class LineCommentToken : public Node {
+class LineCommentToken : public Comment {
 public:
 	LineCommentToken(const std::string &text);
 	virtual std::string toString();
@@ -69,7 +72,7 @@ private:
 	std::string text;
 };
 
-class BlockCommentToken : public Node {
+class BlockCommentToken : public Comment {
 public:
 	BlockCommentToken(const std::string &text, int level);
 	virtual std::string toString();

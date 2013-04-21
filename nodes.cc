@@ -64,7 +64,7 @@ std::string NumberToken::toString() {
 }
 
 LineCommentToken::LineCommentToken(const std::string& text)
-	: Node()
+	: Comment()
 	, text(text) {
 }
 
@@ -75,7 +75,7 @@ std::string LineCommentToken::toString() {
 BlockCommentToken::BlockCommentToken(
 		const std::string& text,
 		int level)
-			: Node()
+			: Comment()
 			, text(text)
 			, level(level)
 		{

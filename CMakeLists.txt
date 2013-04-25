@@ -27,3 +27,22 @@ add_executable(
 	${CMAKE_CURRENT_BINARY_DIR}/parser.cpp
 	)
 
+
+find_package(SWIG REQUIRED)
+INCLUDE(${SWIG_USE_FILE})
+
+FIND_PACKAGE(Lua51 REQUIRED)
+include_directories(${LUA_INCLUDE_DIR})
+SET_SOURCE_FILES_PROPERTIES(luaizer.i PROPERTIES CPLUSPLUS ON)
+
+SWIG_ADD_MODULE(luaizer lua luaizer.i 
+			nodes.cc
+			lua_driver.cc
+			lparser.cc
+			${CMAKE_CURRENT_BINARY_DIR}/lexer.cpp
+			${CMAKE_CURRENT_BINARY_DIR}/parser.cpp
+			wrapper_func.cc
+		)
+		
+SWIG_LINK_LIBRARIES(luaizer)
+ 

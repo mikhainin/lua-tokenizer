@@ -6,6 +6,9 @@
 Node::~Node() {
 }
 
+void Node::addChildren() {
+}
+
 void Node::setLocation(int lineNo) {
 	this->lineNo = lineNo;
 }
@@ -69,7 +72,11 @@ LineCommentToken::LineCommentToken(const std::string& text)
 }
 
 std::string LineCommentToken::toString() {
-	return "--" + text;
+	return "-- " + text;
+}
+
+std::string LineCommentToken::getText() {
+	return text;
 }
 
 BlockCommentToken::BlockCommentToken(
@@ -94,6 +101,10 @@ std::string BlockCommentToken::toString() {
 	return res;
 }
 
+std::string BlockCommentToken::getText() {
+	return text;
+}
+
 OperatorToken::OperatorToken(const std::string& text) : Node(), text(text) {
 }
 
@@ -107,6 +118,17 @@ KeywordToken::KeywordToken(const std::string& text) : Node(), text(text) {
 std::string KeywordToken::toString() {
 	return text;
 }
+
+IfToken::IfToken() : KeywordToken("if") {
+}
+void IfToken::setBlock(IfBlock* block) {
+	ifblock = block;
+}
+
+IfBlock* IfToken::getBlock() {
+	return ifblock;
+}
+
 
 BinExpression::BinExpression(Node* op, Node* left, Node* right) : Expression(), op(op), left(left), right(right) {
 }
@@ -150,8 +172,9 @@ std::string UnaryExpression::toString() {
 }
 
 
-IfBlock::IfBlock(Node* expr, Node* body) : Node(), expr(expr), body(body) {
+IfBlock::IfBlock(Node* ifToken, Node* expr, Node* body) : Node(), expr(expr), body(body) {
 	addChildren(expr, body);
+	ifToken->as<IfToken>()->setBlock(this);
 }
 
 std::string IfBlock::toString() {
@@ -221,8 +244,28 @@ Node* FunctionCall::getArgs() {
 }
 
 MethodCall::MethodCall(Node* prefixexp, Node* methodName, Node* args) : FunctionCall(prefixexp, args), methodName(methodName) {
+	addChildren(prefixexp, methodName, args);
 }
 
 std::string MethodCall::toString() {
 	return getPrefixexp()->toString() + ':' + methodName->toString() + getArgs()->toString();
+}
+
+SquareParens::SquareParens(Node* expr): Node(), expr(expr) {
+	addChildren(expr);
+}
+
+std::string SquareParens::toString() {
+	return '[' + expr->toString() + ']';
+}
+
+TableField::TableField(Node* expr, Node* name) : Node(), expr(expr), name(name) {
+	addChildren(expr, name);
+}
+
+std::string TableField::toString() {
+	if (name) {
+		return name->toString() + " = " + expr->toString();
+	}
+	return expr->toString();
 }

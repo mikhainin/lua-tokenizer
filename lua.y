@@ -66,11 +66,33 @@ static int yylex(yy::parser::semantic_type *yylval,
 %token <node> T_COMMA
 %token <node> T_COLON
 %token <node> T_IN
+%token <node> T_DOTS
 
 %type <node> exp
-%type <node> block binop prefixexp args explist fieldsep statement funcnameslist functioncall var unop laststat comment
-	
-	
+%type <node> 
+		block 
+		binop 
+		prefixexp 
+		args
+		explist
+		fieldsep
+		statement
+		funcnameslist
+		functioncall
+		var
+		unop
+		laststat
+		comment
+		function
+		tableconstructor
+		parlist
+		squared_expr
+		field
+		fieldlist
+		varlist
+		namelist
+		
+		
 %right <node> T_ASSIGN
 
 %left <node> T_OR
@@ -112,7 +134,7 @@ statement:
 |   varlist T_ASSIGN explist  
 |	functioncall
 
-|   T_IF exp T_THEN block T_END               { $$ = driver.createNode<IfBlock>($2, $4); }
+|   T_IF exp T_THEN block T_END               { $$ = driver.createNode<IfBlock>($1, $2, $4); }
 |   T_IF exp T_THEN block T_ELSE block  T_END
 |   T_IF exp T_THEN block elseifblock   T_END
 |   T_IF exp T_THEN block elseifblock   T_ELSE block T_END
@@ -163,7 +185,7 @@ stmtseq:
 
 varlist:
   var T_COMMA varlist
-| var
+| var                   { $$ = $1; }
 ;
 
 
@@ -175,12 +197,12 @@ var:
 
 namelist:
   namelist T_COMMA T_NAME
-| T_NAME 
+| T_NAME                  { $$ = $1; }
 ;
 
 explist:
   exp T_COMMA explist
-| exp { $$ = $1; }
+| exp                  { $$ = $1; }
 ;
 
 
@@ -190,14 +212,14 @@ exp:
 | T_TRUE   { $$ = $1; }
 | T_NUMBER { $$ = $1; }
 | T_STRING { $$ = $1; }
-| "..." 
-| function 
-| prefixexp     { $$ = $1; }
-| tableconstructor 
-| binop    { $$ = $1; }
-| unop     { $$ = $1; }
-| exp comment { $$ = $1; }
-| comment exp { $$ = $2; }
+| T_DOTS   { $$ = $1; }
+| function     { $$ = $1; }
+| prefixexp    { $$ = $1; }
+| tableconstructor { $$ = $1; }
+| binop        { $$ = $1; }
+| unop         { $$ = $1; }
+| exp comment  { $$ = $1; }
+| comment exp  { $$ = $2; }
 ;
 
 prefixexp:
@@ -244,8 +266,8 @@ funcbody:
 
 parlist:
   namelist
-| namelist T_COMMA "..."
-| "..."
+| namelist T_COMMA T_DOTS
+| T_DOTS   { $$ = $1; }
 ;
 
 
@@ -256,18 +278,21 @@ tableconstructor:
 
 
 fieldlist:
-  field
+  field						{ $$ = $1; } 
 | field fieldsep fieldlist
 | field fieldsep
 ;
 
 
 field:
-  T_LEFT_SQUARE_BRACE exp T_RIGHT_SQUARE_BRACE T_ASSIGN exp 
-| T_NAME T_ASSIGN exp 
-| exp
+  squared_expr T_ASSIGN exp { $$ = driver.createNode<TableField>($1, $3); }
+| T_NAME T_ASSIGN exp 		{ $$ = driver.createNode<TableField>($1, $3); }
+| exp						{ $$ = driver.createNode<TableField>($1); }
 ;
 
+squared_expr: 
+	T_LEFT_SQUARE_BRACE exp T_RIGHT_SQUARE_BRACE { $$ = driver.createNode<SquareParens>($2); }
+;
 
 fieldsep: 
   T_COMMA      { $$ = $1; } 
@@ -284,15 +309,15 @@ functioncall:
 args:
   T_LPAREN T_RPAREN          { $$ = driver.createNode<Parens>(); }
 | T_LPAREN explist T_RPAREN  { $$ = driver.createNode<Parens>($2); }
-| tableconstructor 
-| T_STRING { $$ = $1; }
+| tableconstructor           { $$ = $1; }
+| T_STRING                   { $$ = $1; }
 ;
 
 
 comment:
-    comment T_COMMENT
-|	T_COMMENT
+	T_COMMENT { $$ = $1; }
 ;
+
 
 %%
 

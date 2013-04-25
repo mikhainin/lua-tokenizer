@@ -59,15 +59,19 @@ private:
 };
 
 
+
 class Comment : public Node {
 protected:
 	inline Comment() : Node() {};
+public:
+	virtual std::string getText() = 0;
 };
 
 class LineCommentToken : public Comment {
 public:
 	LineCommentToken(const std::string &text);
 	virtual std::string toString();
+	virtual std::string getText();
 private:
 	std::string text;
 };
@@ -76,6 +80,7 @@ class BlockCommentToken : public Comment {
 public:
 	BlockCommentToken(const std::string &text, int level);
 	virtual std::string toString();
+	virtual std::string getText();
 private:
 	std::string text;
 	int level = 0;
@@ -97,6 +102,18 @@ private:
 	std::string text;
 
 };
+
+class IfBlock;
+class IfToken : public KeywordToken {
+public:
+	IfToken();
+	void setBlock(IfBlock* block);
+	IfBlock* getBlock();
+private:
+	IfBlock* ifblock = nullptr;
+};
+
+
 
 class Expression : public Node {
 protected:
@@ -140,7 +157,7 @@ private:
 
 class IfBlock : public Node {
 public:
-	IfBlock(Node* expr, Node* body);
+	IfBlock(Node* ifToken, Node* expr, Node* body);
 	virtual std::string toString();
 	Node *getExpr();
 private:
@@ -168,6 +185,15 @@ private:
 	Node *expr = nullptr;
 };
 
+class SquareParens : public Node {
+public:
+	SquareParens(Node *expr);
+	virtual std::string toString();
+private:
+	Node *expr = nullptr;
+};
+
+
 class Explist : public Node {
 public:
 	Explist(Node *expr, Explist *explist = nullptr);
@@ -194,4 +220,13 @@ public:
 	virtual std::string toString();
 private:
 	Node *methodName = nullptr;
+};
+
+class TableField  : public Node {
+public:
+	TableField(Node *expr, Node *name = nullptr);
+	virtual std::string toString();
+private:
+	Node *expr = nullptr;
+	Node *name = nullptr;
 };

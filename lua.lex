@@ -168,7 +168,7 @@ void resetString() {
 "["        { return token::T_LEFT_SQUARE_BRACE; }
 "]"        { return token::T_RIGHT_SQUARE_BRACE; }
 ";"        { return token::T_SEMICOLON; }
-"if"       { createNode<KeywordToken>(yytext); return token::T_IF; }
+"if"       { createNode<IfToken>(); return token::T_IF; }
 "then"     { createNode<KeywordToken>(yytext); return token::T_THEN; }
 "else"     { createNode<KeywordToken>(yytext); return token::T_ELSE; }
 "elseif"   { createNode<KeywordToken>(yytext); return token::T_ELSEIF; }
@@ -187,14 +187,14 @@ void resetString() {
 "false"    { createNode<KeywordToken>(yytext); return token::T_FALSE; }
 "true"     { createNode<KeywordToken>(yytext); return token::T_TRUE; }
 "."        { createNode<OperatorToken>(yytext); return token::T_DOT; }
-":"        { createNode<OperatorToken>(yytext);return token::T_COLON; }
+":"        { createNode<OperatorToken>(yytext); return token::T_COLON; }
 [0-9]+(\.[0-9]+)?           { createNode<NumberToken>(yytext); return token::T_NUMBER; }
 0x[0-9a-fA-F]               { createNode<NumberToken>(yytext); return token::T_NUMBER; }
 [a-zA-Z_][a-zA-Z_0-9]*      { createNode<NumberToken>(yytext); return token::T_NAME; }
 \          { ; }
 \n         { nextline(); }
 \t         { ; }
-
+"..."      { createNode<OperatorToken>(yytext);return token::T_DOTS; }
 .          { yyerror("illegal token"); }
 
 %%

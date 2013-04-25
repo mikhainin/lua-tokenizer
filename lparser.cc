@@ -104,6 +104,8 @@ int main(int argc, char* argv[]) {
 				}
 			}
 			std::cout << std::endl;
+		} else if( p->is<Comment>() ) {
+			std::cout << p->toString() << std::endl;
 		}
 	}
 

@@ -24,20 +24,21 @@ void lua_driver::error (const std::string& m) {
 
 int lua_driver::parse (const std::string& f) {
 
-	    std::ifstream in_file( f.c_str() );
-	    if( ! in_file.good() ) exit( EXIT_FAILURE );
-	    scanner.reset( new Scanner( &in_file ) );
+	std::ifstream in_file( f.c_str() );
+	if( ! in_file.good() ) exit( EXIT_FAILURE );
+	scanner.reset( new Scanner( &in_file ) );
 
-	    /* check to see if its initialized */
-	    assert( scanner != nullptr );
-	    parser.reset(new yy::parser( *scanner, *this ) );
-	    // parser->set_debug_level(7);
+	/* check to see if its initialized */
+	assert( scanner != nullptr );
+	parser.reset(new yy::parser( *scanner, *this ) );
+	// parser->set_debug_level(7);
 
-	    assert( parser != nullptr );
-	    if( parser->parse() )
-	    {
-	       std::cerr << "Parse failed!!\n";
-	    }
+	assert( parser != nullptr );
+	if( parser->parse() )
+	{
+	   std::cerr << "Parse failed!!\n";
+	}
+	return 0;
 }
 
 void lua_driver::addNode(Node *n) {

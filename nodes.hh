@@ -230,3 +230,31 @@ private:
 	Node *expr = nullptr;
 	Node *name = nullptr;
 };
+
+class CommaSeparatedList : public Node {
+public:
+	CommaSeparatedList(Node *name = nullptr);
+	virtual std::string toString();
+	void addName(Node *name);
+private:
+	std::vector<Node*> names;
+};
+
+class FunctionBody : public Node {
+public:
+	FunctionBody(Node *body = nullptr, Node *parlist = nullptr);
+	virtual std::string toString();
+private:
+	Node *body = nullptr;
+	Node *parlist = nullptr;
+};
+
+
+class Function: public Node {
+public:
+	Function(Node *body, Node *name = nullptr);
+	virtual std::string toString();
+private:
+	Node *body = nullptr;
+	Node *name = nullptr;
+};

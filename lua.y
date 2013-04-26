@@ -91,7 +91,7 @@ static int yylex(yy::parser::semantic_type *yylval,
 		fieldlist
 		varlist
 		namelist
-		
+		funcbody
 		
 %right <node> T_ASSIGN
 
@@ -196,8 +196,8 @@ var:
 ;
 
 namelist:
-  namelist T_COMMA T_NAME
-| T_NAME                  { $$ = $1; }
+  namelist T_COMMA T_NAME { $$ = $1; $$->as<CommaSeparatedList>()->addName($3); }
+| T_NAME                  { $$ = driver.createNode<CommaSeparatedList>($1); }
 ;
 
 explist:
@@ -255,17 +255,19 @@ unop:
 
 
 function:
-  T_FUNCTION funcbody
+  T_FUNCTION funcbody { $$ = driver.createNode<Function>($2); }
 ;
 
 
 funcbody:
-  T_LPAREN T_RPAREN block T_END
-| T_LPAREN parlist T_RPAREN block T_END
+  T_LPAREN T_RPAREN T_END                { $$ = driver.createNode<FunctionBody>(); }
+| T_LPAREN T_RPAREN block T_END          { $$ = driver.createNode<FunctionBody>($3); }
+| T_LPAREN parlist T_RPAREN block T_END  { $$ = driver.createNode<FunctionBody>($4, $2); }
+| T_LPAREN parlist T_RPAREN T_END        { $$ = driver.createNode<FunctionBody>(nullptr, $2); }
 ;
 
 parlist:
-  namelist
+  namelist { $$ = $1; }
 | namelist T_COMMA T_DOTS
 | T_DOTS   { $$ = $1; }
 ;

@@ -269,3 +269,51 @@ std::string TableField::toString() {
 	}
 	return expr->toString();
 }
+
+CommaSeparatedList::CommaSeparatedList(Node* name) : Node() {
+	addChildren(name);
+	names.push_back(name);
+}
+
+std::string CommaSeparatedList::toString() {
+	auto p = names.begin();
+	std::string res = (*p)->toString();
+
+	for( ++p ; p != names.end(); ++p) {
+		res += ", ";
+		res += (*p)->toString();
+	}
+	return res;
+}
+
+void CommaSeparatedList::addName(Node *name) {
+	addChildren(name);
+	names.push_back(name);
+}
+
+FunctionBody::FunctionBody(Node* body, Node* parlist) : Node(), body(body), parlist(parlist) {
+	addChildren(body, parlist);
+}
+
+std::string FunctionBody::toString() {
+	std::string res = "(";
+	if (parlist) {
+		res += parlist->toString();
+	}
+	res += ")\n";
+	if (body) {
+		res += body->toString() + "\n";
+	}
+	return res;
+}
+
+Function::Function(Node* body, Node* name) : Node(), body(body), name(name)  {
+	addChildren(body, name);
+}
+
+std::string Function::toString() {
+	if (name) {
+		return "function " + name->toString()  + body->toString() + "\nend";
+	}
+	return "function " + body->toString() + "\nend";
+}

@@ -4,7 +4,7 @@ project(lua_parser)
 
 find_package(BISON)
 find_package(FLEX)
-
+     
 FLEX_TARGET(LuaScanner lua.lex ${CMAKE_CURRENT_BINARY_DIR}/lexer.cpp)
 BISON_TARGET(LuaParser lua.y   ${CMAKE_CURRENT_BINARY_DIR}/parser.cpp COMPILE_FLAGS --debug)
 

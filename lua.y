@@ -201,8 +201,8 @@ namelist:
 ;
 
 explist:
-  exp T_COMMA explist
-| exp                  { $$ = $1; }
+  exp T_COMMA explist { $$ = driver.createNode<BinExpression>($2, $1, $3); }
+| exp { $$ = $1; }
 ;
 
 

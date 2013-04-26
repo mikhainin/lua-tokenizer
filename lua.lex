@@ -181,7 +181,7 @@ void resetString() {
 "repeat"   { createNode<KeywordToken>(yytext); return token::T_REPEAT; }
 "until"    { createNode<KeywordToken>(yytext); return token::T_UNTIL; }
 "break"    { createNode<KeywordToken>(yytext); return token::T_BREAK; }
-","        { return token::T_COMMA; }
+","        { createNode<OperatorToken>(yytext); return token::T_COMMA; }
 "return"   { createNode<KeywordToken>(yytext); return token::T_RETURN; }
 "nil"      { createNode<KeywordToken>(yytext); return token::T_NIL; }
 "false"    { createNode<KeywordToken>(yytext); return token::T_FALSE; }

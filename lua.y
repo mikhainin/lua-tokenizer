@@ -184,8 +184,8 @@ stmtseq:
 
 
 varlist:
-  var T_COMMA varlist
-| var                   { $$ = $1; }
+  varlist T_COMMA var    { $$ = $1; $$->as<CommaSeparatedList>()->addName($3); }
+| var                    { $$ = driver.createNode<CommaSeparatedList>($1); }
 ;
 
 
@@ -201,8 +201,8 @@ namelist:
 ;
 
 explist:
-  exp T_COMMA explist { $$ = driver.createNode<BinExpression>($2, $1, $3); }
-| exp { $$ = $1; }
+  explist T_COMMA exp { $$ = $1; $$->as<CommaSeparatedList>()->addName($3); }
+| exp                 { $$ = driver.createNode<CommaSeparatedList>($1); }
 ;
 
 
@@ -267,9 +267,9 @@ funcbody:
 ;
 
 parlist:
-  namelist { $$ = $1; }
-| namelist T_COMMA T_DOTS
-| T_DOTS   { $$ = $1; }
+  namelist                 { $$ = $1; }
+| namelist T_COMMA T_DOTS  { $$ = $1; $$->as<CommaSeparatedList>()->addName($3); }
+| T_DOTS                   { $$ = $1; }
 ;
 
 

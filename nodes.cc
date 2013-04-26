@@ -279,7 +279,7 @@ std::string CommaSeparatedList::toString() {
 	auto p = names.begin();
 	std::string res = (*p)->toString();
 
-	for( ++p ; p != names.end(); ++p) {
+	for( ++p ; p != names.end() ; ++p) {
 		res += ", ";
 		res += (*p)->toString();
 	}

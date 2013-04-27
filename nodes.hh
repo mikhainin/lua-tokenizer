@@ -157,12 +157,26 @@ private:
 
 class IfBlock : public Node {
 public:
-	IfBlock(Node* ifToken, Node* expr, Node* body);
+	IfBlock(Node* ifToken, Node* expr, Node* body, Node *els = nullptr, Node *elsIf = nullptr);
 	virtual std::string toString();
 	Node *getExpr();
 private:
+	Node *expr  = nullptr;
+	Node *body  = nullptr;
+	Node *els   = nullptr;
+	Node *elsIf = nullptr;
+};
+
+class ElseIfClause : public Node {
+public:
+	ElseIfClause(Node *expr, Node *body);
+	virtual std::string toString();
+	void addElseIfClause(ElseIfClause *elseIf);
+	ElseIfClause *elseIfClause();
+private:
 	Node *expr = nullptr;
 	Node *body = nullptr;
+	ElseIfClause *elseIf = nullptr;
 };
 
 class ReturnStatement : public Node {

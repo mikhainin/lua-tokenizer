@@ -172,8 +172,14 @@ std::string UnaryExpression::toString() {
 }
 
 
-IfBlock::IfBlock(Node* ifToken, Node* expr, Node* body) : Node(), expr(expr), body(body) {
-	addChildren(expr, body);
+IfBlock::IfBlock(Node* ifToken, Node* expr, Node* body, Node *els, Node *elsIf)
+		: Node()
+		, expr(expr)
+		, body(body)
+		, els(els)
+		, elsIf(elsIf)
+{
+	addChildren(expr, body, els, elsIf);
 	ifToken->as<IfToken>()->setBlock(this);
 }
 
@@ -190,6 +196,39 @@ std::string IfBlock::toString() {
 Node* IfBlock::getExpr() {
 	return expr;
 }
+
+
+
+ElseIfClause::ElseIfClause(Node* expr, Node* body) : Node(), expr(expr), body(body) {
+	addChildren(expr, body);
+}
+
+std::string ElseIfClause::toString() {
+	if (elseIf) {
+		return
+				"elseif " +
+				expr->toString() +
+				"then\n" +
+				body->toString() +
+				"\n" +
+				elseIf->toString();
+	}
+	return "elseif " +
+			expr->toString() +
+			"then\n" +
+			body->toString()
+			;
+}
+
+void ElseIfClause::addElseIfClause(ElseIfClause* elseIf) {
+	addChildren(elseIf);
+	this->elseIf = elseIf;
+}
+
+ElseIfClause* ElseIfClause::elseIfClause() {
+	return elseIf;
+}
+
 
 ReturnStatement::ReturnStatement(Node* explist) : Node(), explist(explist) {
 	addChildren(explist);

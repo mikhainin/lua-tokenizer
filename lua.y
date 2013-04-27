@@ -92,7 +92,9 @@ static int yylex(yy::parser::semantic_type *yylval,
 		varlist
 		namelist
 		funcbody
+		elseifblock
 		
+
 %right <node> T_ASSIGN
 
 %left <node> T_OR
@@ -130,15 +132,13 @@ block:
 ;
 
 statement:
-	comment                                   { $$ = $1; }
+	comment                                           { $$ = $1; }
 |   varlist T_ASSIGN explist  
-|	functioncall
-
-|   T_IF exp T_THEN block T_END               { $$ = driver.createNode<IfBlock>($1, $2, $4); }
-|   T_IF exp T_THEN block T_ELSE block  T_END
-|   T_IF exp T_THEN block elseifblock   T_END
-|   T_IF exp T_THEN block elseifblock   T_ELSE block T_END
- 
+|	functioncall                                      { $$ = $1; }
+|   T_IF exp T_THEN block T_END                       { $$ = driver.createNode<IfBlock>($1, $2, $4); }
+|   T_IF exp T_THEN block T_ELSE block  T_END         { $$ = driver.createNode<IfBlock>($1, $2, $4, $6); }
+|   T_IF exp T_THEN block elseifblock   T_END         { $$ = driver.createNode<IfBlock>($1, $2, $4, nullptr, $5); }
+|   T_IF exp T_THEN block elseifblock   T_ELSE block T_END { $$ = driver.createNode<IfBlock>($1, $2, $4, $7, $5); }
 |   T_FOR T_NAME T_ASSIGN exp T_COMMA exp T_DO block T_END
 |   T_FOR T_NAME T_ASSIGN exp T_COMMA exp T_COMMA exp T_DO block T_END
 |	T_FOR namelist T_IN explist T_DO block T_END
@@ -149,8 +149,8 @@ statement:
 ;
 
 elseifblock:
-    T_ELSEIF exp T_THEN block
-|   elseifblock T_ELSEIF exp T_THEN block
+    T_ELSEIF exp T_THEN block             {  $$ = driver.createNode<ElseIfClause>($2, $4); }
+|   T_ELSEIF exp T_THEN block elseifblock { $$ = driver.createNode<ElseIfClause>($2, $4); $$->as<ElseIfClause>()->addElseIfClause($5->as<ElseIfClause>()); } 
 ;
 
 laststat:
@@ -165,7 +165,7 @@ funcname:
 ;
 
 funcnameslist:
-   T_NAME 				{ $$ = $1; }
+   T_NAME 	            { $$ = $1; }
 |  T_NAME T_DOT T_NAME  { $$ = driver.createNode<DotBinExpression>($2, $1, $3); }
 ;
 

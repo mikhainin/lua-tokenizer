@@ -317,3 +317,14 @@ std::string Function::toString() {
 	}
 	return "function " + body->toString() + "\nend";
 }
+
+TableConstructor::TableConstructor(Node* fieldlist) : Node(), fieldlist(fieldlist) {
+	addChildren(fieldlist);
+}
+
+std::string TableConstructor::toString() {
+	if (fieldlist) {
+		return '{' + fieldlist->toString() + '}';
+	}
+	return "{}";
+}

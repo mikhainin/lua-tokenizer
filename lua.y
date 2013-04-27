@@ -207,12 +207,12 @@ explist:
 
 
 exp:
-  T_NIL    { $$ = $1; }
-| T_FALSE  { $$ = $1; }
-| T_TRUE   { $$ = $1; }
-| T_NUMBER { $$ = $1; }
-| T_STRING { $$ = $1; }
-| T_DOTS   { $$ = $1; }
+  T_NIL        { $$ = $1; }
+| T_FALSE      { $$ = $1; }
+| T_TRUE       { $$ = $1; }
+| T_NUMBER     { $$ = $1; }
+| T_STRING     { $$ = $1; }
+| T_DOTS       { $$ = $1; }
 | function     { $$ = $1; }
 | prefixexp    { $$ = $1; }
 | tableconstructor { $$ = $1; }
@@ -274,15 +274,15 @@ parlist:
 
 
 tableconstructor:
-  T_LEFT_BRACE T_RIGHT_BRACE
-| T_LEFT_BRACE fieldlist T_RIGHT_BRACE
+  T_LEFT_BRACE T_RIGHT_BRACE           { $$ = driver.createNode<TableConstructor>(); }
+| T_LEFT_BRACE fieldlist T_RIGHT_BRACE { $$ = driver.createNode<TableConstructor>($2); }
 ;
 
 
 fieldlist:
-  field						{ $$ = $1; } 
-| field fieldsep fieldlist
-| field fieldsep
+  fieldlist fieldsep field  { $$ = $1; $$->as<CommaSeparatedList>()->addName($3); }
+| fieldlist fieldsep        { $$ = $1; }
+| field						{ $$ = driver.createNode<CommaSeparatedList>($1); }
 ;
 
 

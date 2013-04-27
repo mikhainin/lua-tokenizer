@@ -258,3 +258,11 @@ private:
 	Node *body = nullptr;
 	Node *name = nullptr;
 };
+
+class TableConstructor: public Node {
+public:
+	TableConstructor(Node *fieldlist = nullptr);
+	virtual std::string toString();
+private:
+	Node *fieldlist = nullptr;
+};

@@ -42,14 +42,16 @@ public:
   }
 
   void addNode(Node *);
+  void setRootNode(Node *rootNode);
+  Node *getRootNode();
 
 private:
   std::string file;
   bool trace_parsing;
   std::shared_ptr<yy::parser> parser;
-  std::shared_ptr<Scanner > scanner;
+  std::shared_ptr<Scanner> scanner;
   std::vector<Node *> expressionNodes;
-
+  Node *rootNode = nullptr;
 };
 
 

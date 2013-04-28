@@ -13,6 +13,7 @@ namespace std {
 }
 
 
+
 class lua_driver
 {
 public:
@@ -26,7 +27,7 @@ public:
   
   const std::vector<Node *> getNodes() const;
   const std::vector<Node *> getExpressionNodes() const;
-  
+  Node *getRootNode();
 };
 
 class Node {
@@ -48,6 +49,9 @@ class BlockCommentToken : public Comment {
 class IfBlock : public Node {
 public:
 	Node *getExpr();
+	Node *getBody();
+	Node *getElseIfBlock();
+	Node *getElseBlock();
 };
 
 class IfToken : public Node {

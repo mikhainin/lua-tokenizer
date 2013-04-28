@@ -197,6 +197,18 @@ Node* IfBlock::getExpr() {
 	return expr;
 }
 
+Node *IfBlock::getBody() {
+	return body;
+}
+
+Node *IfBlock::getElseIfBlock() {
+	return elsIf;
+}
+
+Node *IfBlock::getElseBlock() {
+	return els;
+}
+
 
 
 ElseIfClause::ElseIfClause(Node* expr, Node* body) : Node(), expr(expr), body(body) {
@@ -366,4 +378,44 @@ std::string TableConstructor::toString() {
 		return '{' + fieldlist->toString() + '}';
 	}
 	return "{}";
+}
+
+LocalClause::LocalClause(Node* statement) : Node(), statement(statement) {
+	addChildren(statement);
+}
+
+std::string LocalClause::toString() {
+	return "local " + statement->toString();
+}
+
+StatementSequence::StatementSequence(Node* statement) : Node() {
+	if (statement) {
+		addChildren(statement);
+		statements.push_back(statement);
+	}
+}
+
+std::string StatementSequence::toString() {
+	if (statements.empty()) {
+		return "";
+	}
+
+	auto p = statements.begin();
+	std::string res = (*p)->toString();
+	res += "\n";
+	for(++p; p != statements.end(); ++p) {
+		res += "\n";
+		res += (*p)->toString();
+	}
+	return res;
+}
+
+void StatementSequence::addStatement(Node* statement) {
+	addChildren(statement);
+	statements.push_back(statement);
+}
+
+void StatementSequence::addLastStatement(Node* statement) {
+	addStatement(statement);
+	lastStatement = statement;
 }

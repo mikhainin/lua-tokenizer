@@ -50,6 +50,13 @@ const std::vector<Node *> lua_driver::getNodes() const {
 	return scanner->getNodes();
 }
 
+void lua_driver::setRootNode(Node *rootNode) {
+	this->rootNode = rootNode;
+}
+
+Node *lua_driver::getRootNode() {
+	return rootNode;
+}
 
 const std::vector<Node *> Scanner::getNodes() const {
 	return nodes;

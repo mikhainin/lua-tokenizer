@@ -68,8 +68,9 @@ static int yylex(yy::parser::semantic_type *yylval,
 %token <node> T_IN
 %token <node> T_DOTS
 
-%type <node> exp
+%type <node> ROOT
 %type <node> 
+		exp
 		block 
 		binop 
 		prefixexp 
@@ -93,7 +94,8 @@ static int yylex(yy::parser::semantic_type *yylval,
 		namelist
 		funcbody
 		elseifblock
-		
+		funcname
+		stmtseq
 
 %right <node> T_ASSIGN
 
@@ -120,20 +122,20 @@ static int yylex(yy::parser::semantic_type *yylval,
 
 
 ROOT:
-  block
+  block { $$ = $1; driver.setRootNode($1); }
 ;
 
 
 
 block:
-  stmtseq
-| stmtseq laststat
-|
+  stmtseq          { $$ = $1; }
+| stmtseq laststat { $$ = $1; $$->as<StatementSequence>()->addLastStatement($2); }
+|                  { $$ = driver.createNode<StatementSequence>(); }
 ;
 
 statement:
 	comment                                           { $$ = $1; }
-|   varlist T_ASSIGN explist  
+|   varlist T_ASSIGN explist                          { $$ = driver.createNode<BinExpression>($2, $1, $3); }
 |	functioncall                                      { $$ = $1; }
 |   T_IF exp T_THEN block T_END                       { $$ = driver.createNode<IfBlock>($1, $2, $4); }
 |   T_IF exp T_THEN block T_ELSE block  T_END         { $$ = driver.createNode<IfBlock>($1, $2, $4, $6); }
@@ -141,15 +143,15 @@ statement:
 |   T_IF exp T_THEN block elseifblock   T_ELSE block T_END { $$ = driver.createNode<IfBlock>($1, $2, $4, $7, $5); }
 |   T_FOR T_NAME T_ASSIGN exp T_COMMA exp T_DO block T_END
 |   T_FOR T_NAME T_ASSIGN exp T_COMMA exp T_COMMA exp T_DO block T_END
-|	T_FOR namelist T_IN explist T_DO block T_END
-|   T_FUNCTION funcname funcbody
-|   T_LOCAL T_FUNCTION T_NAME funcbody
-|   T_LOCAL namelist 
-|   T_LOCAL namelist T_ASSIGN explist 
+|	T_FOR namelist T_IN explist T_DO block T_END      
+|   T_FUNCTION funcname funcbody                      { $$ = driver.createNode<Function>($3, $2); }
+|   T_LOCAL T_FUNCTION T_NAME funcbody                { $$ = driver.createNode<LocalClause>( driver.createNode<Function>($4, $3) ); }
+|   T_LOCAL namelist                                  { $$ = driver.createNode<LocalClause>($2); }
+|   T_LOCAL namelist T_ASSIGN explist                 { $$ = driver.createNode<LocalClause>( driver.createNode<BinExpression>($3, $2, $4) ); }
 ;
 
 elseifblock:
-    T_ELSEIF exp T_THEN block             {  $$ = driver.createNode<ElseIfClause>($2, $4); }
+    T_ELSEIF exp T_THEN block             { $$ = driver.createNode<ElseIfClause>($2, $4); }
 |   T_ELSEIF exp T_THEN block elseifblock { $$ = driver.createNode<ElseIfClause>($2, $4); $$->as<ElseIfClause>()->addElseIfClause($5->as<ElseIfClause>()); } 
 ;
 
@@ -171,13 +173,13 @@ funcnameslist:
 
 
 stmtseq:
-  stmtseq T_SEMICOLON statement /* { $$ = seq($1, $3); } */
+  stmtseq T_SEMICOLON statement { $$ = $1; $$->as<StatementSequence>()->addStatement($2); }
 
-| statement	
-| statement T_SEMICOLON
+| statement T_SEMICOLON  { $$ = driver.createNode<StatementSequence>($1); }
 
-| stmtseq /* one statement per line */ 
-  statement /* { $$ = seq($1, $2); } */
+| stmtseq                /* one statement per line */ 
+  statement              { $$ = $1; $$->as<StatementSequence>()->addStatement($2);}
+| statement	             { $$ = driver.createNode<StatementSequence>($1); }
 ;
 
 

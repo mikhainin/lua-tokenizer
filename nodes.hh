@@ -160,6 +160,9 @@ public:
 	IfBlock(Node* ifToken, Node* expr, Node* body, Node *els = nullptr, Node *elsIf = nullptr);
 	virtual std::string toString();
 	Node *getExpr();
+	Node *getBody();
+	Node *getElseIfBlock();
+	Node *getElseBlock();
 private:
 	Node *expr  = nullptr;
 	Node *body  = nullptr;
@@ -279,4 +282,32 @@ public:
 	virtual std::string toString();
 private:
 	Node *fieldlist = nullptr;
+};
+
+
+class LocalClause : public Node {
+public:
+	LocalClause(Node *statement = nullptr);
+	virtual std::string toString();
+private:
+	Node *statement = nullptr;
+};
+
+
+class StatementSequence : public Node {
+public:
+	StatementSequence(Node *statement = nullptr);
+	virtual std::string toString();
+	void addStatement(Node *statement);
+	void addLastStatement(Node *statement);
+private:
+	std::vector<Node*> statements;
+	Node *lastStatement = nullptr;
+};
+
+class ForLoop : public Node {
+public:
+	ForLoop(Node *var, Node *start, Node *end, Node *step, Node * body);
+private:
+
 };

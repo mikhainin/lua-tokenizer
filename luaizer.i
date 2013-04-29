@@ -33,6 +33,7 @@ public:
 class Node {
 public:
 	virtual std::string toString() = 0;
+	int lineNo;
 };
 
 class Comment : public Node {

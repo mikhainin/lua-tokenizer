@@ -369,6 +369,10 @@ std::string Function::toString() {
 	return "function " + body->toString() + "\nend";
 }
 
+FunctionBody *Function::getBody() {
+	return body->as<FunctionBody>();
+}
+
 TableConstructor::TableConstructor(Node* fieldlist) : Node(), fieldlist(fieldlist) {
 	addChildren(fieldlist);
 }
@@ -418,4 +422,24 @@ void StatementSequence::addStatement(Node* statement) {
 void StatementSequence::addLastStatement(Node* statement) {
 	addStatement(statement);
 	lastStatement = statement;
+}
+
+
+ForLoop::ForLoop(Node* var, Node* start, Node* end, Node* step, Node* body)
+	: Node()
+    , var(var), start(start), end(end), step(step), body(body) {
+	addChildren(var, start, end, step, body);
+}
+
+std::string ForLoop::toString() {
+	std::string res = "for " + var->toString() + " = " + start->toString() + ", " + end->toString();
+	if (step) {
+		res += ", " + step->toString();
+	}
+	res += " do\n";
+	res += body->toString();
+	res += "\nend\n";
+
+
+	return std::string();
 }

@@ -137,12 +137,15 @@ statement:
 	comment                                           { $$ = $1; }
 |   varlist T_ASSIGN explist                          { $$ = driver.createNode<BinExpression>($2, $1, $3); }
 |	functioncall                                      { $$ = $1; }
+|   T_DO block T_END  
+|   T_WHILE exp T_DO block T_END 
+|   T_REPEAT block T_UNTIL exp 
 |   T_IF exp T_THEN block T_END                       { $$ = driver.createNode<IfBlock>($1, $2, $4); }
 |   T_IF exp T_THEN block T_ELSE block  T_END         { $$ = driver.createNode<IfBlock>($1, $2, $4, $6); }
 |   T_IF exp T_THEN block elseifblock   T_END         { $$ = driver.createNode<IfBlock>($1, $2, $4, nullptr, $5); }
-|   T_IF exp T_THEN block elseifblock   T_ELSE block T_END { $$ = driver.createNode<IfBlock>($1, $2, $4, $7, $5); }
-|   T_FOR T_NAME T_ASSIGN exp T_COMMA exp T_DO block T_END
-|   T_FOR T_NAME T_ASSIGN exp T_COMMA exp T_COMMA exp T_DO block T_END
+|   T_IF exp T_THEN block elseifblock   T_ELSE block T_END  { $$ = driver.createNode<IfBlock>($1, $2, $4, $7, $5); }
+|   T_FOR T_NAME T_ASSIGN exp T_COMMA exp T_DO block T_END              { $$ = driver.createNode<ForLoop>($2, $4, $6, nullptr, $8); }
+|   T_FOR T_NAME T_ASSIGN exp T_COMMA exp T_COMMA exp T_DO block T_END  { $$ = driver.createNode<ForLoop>($2, $4, $6, $8, $10); }
 |	T_FOR namelist T_IN explist T_DO block T_END      
 |   T_FUNCTION funcname funcbody                      { $$ = driver.createNode<Function>($3, $2); }
 |   T_LOCAL T_FUNCTION T_NAME funcbody                { $$ = driver.createNode<LocalClause>( driver.createNode<Function>($4, $3) ); }

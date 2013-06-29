@@ -271,6 +271,7 @@ class Function: public Node {
 public:
 	Function(Node *body, Node *name = nullptr);
 	virtual std::string toString();
+	FunctionBody *getBody();
 private:
 	Node *body = nullptr;
 	Node *name = nullptr;
@@ -308,6 +309,11 @@ private:
 class ForLoop : public Node {
 public:
 	ForLoop(Node *var, Node *start, Node *end, Node *step, Node * body);
+	virtual std::string toString();
 private:
-
+	Node *var  = nullptr;
+	Node *start= nullptr;
+	Node *end  = nullptr;
+	Node *step = nullptr;
+	Node *body = nullptr;
 };

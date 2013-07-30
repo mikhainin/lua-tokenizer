@@ -441,5 +441,21 @@ std::string ForLoop::toString() {
 	res += "\nend\n";
 
 
-	return std::string();
+	return res;
+}
+
+ForNamelistLoop::ForNamelistLoop(Node* namelist, Node* exprlist, Node* body)
+	: Node()
+	, namelist(namelist), exprlist(exprlist), body(body) {
+
+	addChildren(namelist, exprlist, body);
+
+}
+
+std::string ForNamelistLoop::toString() {
+	std::string res = "for " + namelist->toString() + " in " + exprlist->toString() + " do\n";
+	res += body->toString();
+	res += "\nend\n";
+
+	return res;
 }

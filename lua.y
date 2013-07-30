@@ -146,7 +146,7 @@ statement:
 |   T_IF exp T_THEN block elseifblock   T_ELSE block T_END  { $$ = driver.createNode<IfBlock>($1, $2, $4, $7, $5); }
 |   T_FOR T_NAME T_ASSIGN exp T_COMMA exp T_DO block T_END              { $$ = driver.createNode<ForLoop>($2, $4, $6, nullptr, $8); }
 |   T_FOR T_NAME T_ASSIGN exp T_COMMA exp T_COMMA exp T_DO block T_END  { $$ = driver.createNode<ForLoop>($2, $4, $6, $8, $10); }
-|	T_FOR namelist T_IN explist T_DO block T_END      
+|	T_FOR namelist T_IN explist T_DO block T_END                        { $$ = driver.createNode<ForNamelistLoop>($2, $4, $6); }
 |   T_FUNCTION funcname funcbody                      { $$ = driver.createNode<Function>($3, $2); }
 |   T_LOCAL T_FUNCTION T_NAME funcbody                { $$ = driver.createNode<LocalClause>( driver.createNode<Function>($4, $3) ); }
 |   T_LOCAL namelist                                  { $$ = driver.createNode<LocalClause>($2); }

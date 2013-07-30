@@ -317,3 +317,13 @@ private:
 	Node *step = nullptr;
 	Node *body = nullptr;
 };
+
+class ForNamelistLoop : public Node {
+public:
+	ForNamelistLoop(Node *namelist, Node *exprlist, Node *body);
+	virtual std::string toString();
+private:
+	Node *namelist = nullptr;
+	Node *exprlist = nullptr;
+	Node *body     = nullptr;
+};
